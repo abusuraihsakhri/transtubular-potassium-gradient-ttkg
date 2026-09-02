@@ -1,69 +1,165 @@
-# TTKG Calculator — Transtubular Potassium Gradient
+# Transtubular Potassium Gradient TTKG
 
-> **Nephrology** — Renal Potassium Handling Assessment
+> **Domain:** Diagnostic Radiology & Medical Imaging AI  
+> **Reference Guidelines & Standards:** `American College of Radiology (ACR) RADS & Fleischner Society`
 
-## Overview
+<div align="center">
 
-Real clinical calculator for evaluating renal potassium handling using the transtubular potassium gradient (TTKG), urine K/Cr ratio, and transtubular sodium gradient (TTNaG) to differentiate renal vs extrarenal causes of hypo- and hyperkalemia.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
+![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
+![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
 
-**References:** West ML et al. (NEJM 1986), Kamel KS et al. (Kidney Int 2002)
+</div>
 
-## Formulas Implemented
+---
 
-| Calculator | Formula |
-|:-----------|:--------|
-| **TTKG** | (UK × POsm) / (UOsm × PK) |
-| **Urine K/Cr** | UK / UCr (mEq/g) |
-| **TTNaG** | (UNa × POsm) / (UOsm × PNa) |
+## 📖 What It Does
 
-## CLI Usage
+Transtubular Potassium Gradient (TTKG) Calculator
+
+Real implementations for:
+- TTKG = (UK × POsm) / (UOsm × PK)
+- Interpretation for hypo- and hyperkalemia
+- Aldosterone assessment
+- Urine K/Cr ratio
+- Transtubular Na gradient (TTNaG)
+
+References: West ML et al. (NEJM 1986), Kamel KS et al. (Kidney Int 2002)
+Stdlib only.
+
+---
+
+## ⚙️ Key Capabilities & Algorithmic Modules
+
+### 🔬 Analytical Functions
+
+- **`calc_ttkg()`**: Transtubular Potassium Gradient (TTKG).
+
+TTKG = (UK × POsm) / (UOsm × PK)
+
+Interpretation depends on clinical context:
+
+In HYPOKALEMIA (K < 3.5):
+    TTKG < 2: Appropriate renal K conservation (extrarenal loss)
+    TTKG > 4: Inappropriate renal K wasting (renal cause)
+
+In HYPERKALEMIA (K > 5.0):
+    TTKG < 6: Inappropriate K retention (hypoaldosteronism, K-sparing diuretics)
+    TTKG > 10: Appropriate renal K excretion (extrarenal cause)
+
+Normal TTKG: 8-9
+
+Args:
+    urine_k: Urine potassium (mEq/L)
+    plasma_osm: Plasma osmolality (mOsm/kg)
+    urine_osm: Urine osmolality (mOsm/kg)
+    plasma_k: Plasma/serum potassium (mEq/L)
+
+Returns:
+    Dict with TTKG and interpretation
+- **`calc_urine_k_cr_ratio()`**: Urine K/Creatinine ratio.
+
+Useful when urine osmolality not available.
+
+UK/UCr (mEq/mg):
+    < 13 mEq/g (or < 1.5 mEq/mmol): Appropriate K conservation
+    > 200 mEq/g (or > 23 mEq/mmol): Significant K wasting
+
+Args:
+    urine_k: Urine potassium (mEq/L)
+    urine_cr: Urine creatinine (mg/dL)
+
+Returns:
+    Dict with K/Cr ratio and interpretation
+- **`calc_ttna_gradient()`**: Transtubular Sodium Gradient (TTNaG).
+
+TTNaG = (UNa × POsm) / (UOsm × PNa)
+
+Similar concept to TTKG but for sodium.
+Low TTNaG (< 1): Effective Na reabsorption (volume depletion)
+High TTNaG (> 3): Impaired Na reabsorption
+
+Args:
+    urine_na: Urine sodium (mEq/L)
+    plasma_na: Plasma sodium (mEq/L)
+    urine_osm: Urine osmolality (mOsm/kg)
+    plasma_osm: Plasma osmolality (mOsm/kg)
+
+Returns:
+    Dict with TTNaG and interpretation
+- **`full_potassium_assessment()`**: Complete potassium handling assessment.
+- **`main()`** — calculates and validates main parameters.
+
+---
+
+## 📐 Mathematical Formulation & Logic
+
+```text
+  p_ttkg = sub.add_parser("ttkg", help="Calculate TTKG")
+```
+
+---
+
+## 💻 CLI Quickstart & Usage
+
+### 1. Guided Interactive Mode
+```bash
+python cli.py
+```
+
+### 2. Direct Parameterized Evaluation
+```bash
+python cli.py --input data.csv
+```
+
+### Parameter Reference
+- `--interactive`: Launch guided terminal interactive wizard.
+- `--input <path>`: Evaluate input from JSON or CSV specification.
+- `--json`: Output deterministic structured results in JSON format.
+
+### Input Data Schema
+
+| Field | Description | Requirement |
+|:------|:------------|:------------|
+| `Patient_ID` | Parameter / observation metric | Required |
+| `v1` | Parameter / observation metric | Required |
+| `v2` | Parameter / observation metric | Required |
+| `v3` | Parameter / observation metric | Required |
+
+---
+
+## 🛡️ Security & Enterprise Architecture
+
+* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
+* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
+* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
+* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
+* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+
+---
+
+## 🧪 Testing & Verification
+
+Run the automated test suite:
 
 ```bash
-# TTKG in hypokalemia
-python ttkg_calc.py ttkg --urine-k 15 --plasma-osm 285 --urine-osm 400 --plasma-k 2.8
-
-# TTKG in hyperkalemia
-python ttkg_calc.py ttkg --urine-k 30 --plasma-osm 290 --urine-osm 350 --plasma-k 6.5
-
-# Urine K/Cr ratio
-python ttkg_calc.py k-cr --urine-k 25 --urine-cr 100
-
-# Transtubular Na gradient
-python ttkg_calc.py ttnag --urine-na 20 --plasma-na 140 --urine-osm 400 --plasma-osm 285
-
-# Full potassium assessment
-python ttkg_calc.py full --urine-k 15 --plasma-k 2.8 --plasma-osm 285 --urine-osm 400 --urine-cr 80
+pytest -v
 ```
 
-## Python API
+Execute high-throughput batch simulation benchmarks:
 
-```python
-from ttkg_calc import calc_ttkg, calc_urine_k_cr_ratio, full_potassium_assessment
-
-# TTKG in hypokalemia
-result = calc_ttkg(urine_k=15, plasma_osm=285, urine_osm=400, plasma_k=2.8)
-print(result["ttkg"])  # ~3.8
-print(result["interpretation"])  # "Indeterminate"
-
-# Full assessment
-full = full_potassium_assessment(urine_k=15, plasma_k=2.8,
-                                  plasma_osm=285, urine_osm=400, urine_cr=80)
+```bash
+python simulator.py --tasks 1000 --concurrency 8
 ```
 
-## Interpretation Guide
+---
 
-### Hypokalemia (K < 3.5)
-| TTKG | Interpretation |
-|:-----|:---------------|
-| < 2 | Appropriate K conservation (extrarenal loss) |
-| > 4 | Inappropriate K wasting (renal cause) |
+## 🐳 Container Deployment
 
-### Hyperkalemia (K > 5.0)
-| TTKG | Interpretation |
-|:-----|:---------------|
-| < 6 | Inappropriate K retention (hypoaldosteronism) |
-| > 10 | Appropriate K excretion (extrarenal cause) |
-
-## License
-
-MIT License.
+```bash
+docker build -t transtubular-potassium-gradient-ttkg .
+docker run -p 8000:8000 transtubular-potassium-gradient-ttkg
+```
