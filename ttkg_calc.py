@@ -283,6 +283,22 @@ def main(argv=None):
     p_full.add_argument("--urine-na", type=float, default=None, help="Urine Na (mEq/L)")
     p_full.add_argument("--plasma-na", type=float, default=None, help="Plasma Na (mEq/L)")
 
+    # Audit (enterprise supervisor)
+    p_audit = sub.add_parser("audit", help="Run enterprise supervisor audit task")
+    p_audit.add_argument("--task-id", type=str, required=True, help="Task identifier")
+    p_audit.add_argument("--target-id", type=str, default="SPECIMEN-001", help="Target identifier")
+    p_audit.add_argument("--primary-metric", type=float, default=10.0, help="Primary metric value")
+    p_audit.add_argument("--secondary-metric", type=float, default=5.0, help="Secondary metric value")
+    p_audit.add_argument("--status-descriptor", type=str, default="NOMINAL", help="Status descriptor")
+    p_audit.add_argument("--critical", action="store_true", help="Flag as critical")
+
+    # Chat (enterprise supervisor)
+    p_chat = sub.add_parser("chat", help="Query the enterprise supervisor chat")
+    p_chat.add_argument("query", nargs="+", help="Query string")
+
+    # Verify audit trail
+    p_verify = sub.add_parser("verify-audit", help="Verify HMAC-SHA256 audit trail integrity")
+
     args = parser.parse_args(argv)
 
     if args.command == "ttkg":
@@ -295,11 +311,34 @@ def main(argv=None):
         result = full_potassium_assessment(args.urine_k, args.plasma_k,
                                             args.plasma_osm, args.urine_osm,
                                             args.urine_cr, args.urine_na, args.plasma_na)
+    elif args.command == "audit":
+        from agents.models import SystemTaskPayload
+        from agents.supervisor import SystemSupervisor
+        supervisor = SystemSupervisor(model_provider="mock")
+        payload = SystemTaskPayload(
+            task_id=args.task_id,
+            target_identifier=args.target_id,
+            primary_metric=args.primary_metric,
+            secondary_metric=args.secondary_metric,
+            status_descriptor=args.status_descriptor,
+            is_critical_flag=args.critical,
+        )
+        dossier = supervisor.process_task(payload)
+        result = dossier.to_dict()
+    elif args.command == "chat":
+        from agents.supervisor import SystemSupervisor
+        supervisor = SystemSupervisor(model_provider="mock")
+        query = " ".join(args.query)
+        response = supervisor.query_supervisory_chat(query)
+        result = {"response": response}
+    elif args.command == "verify-audit":
+        from agents.base import AuditLogger
+        result = {"audit_integrity_verified": AuditLogger.verify_integrity()}
     else:
         parser.print_help()
         return 1
 
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result, indent=2, default=str))
     return 0
 
 

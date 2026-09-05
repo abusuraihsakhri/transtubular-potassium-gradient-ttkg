@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml .
+# Install Python dependencies
 RUN pip install --no-cache-dir fastapi uvicorn pydantic pytest
 
 COPY . .
@@ -19,4 +19,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["python", "cli.py", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "cli.py", "ttkg", "--urine-k", "60", "--plasma-osm", "285", "--urine-osm", "300", "--plasma-k", "4.0"]

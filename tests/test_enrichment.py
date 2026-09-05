@@ -7,16 +7,17 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 from enrichment import (
-    ElectrolyteReplacementProtocolEngine,
-    NephrotoxicDrugInteractionAlertingEngine,
-    AkiStagingProgressionAlertsEngine,
-    CrrtDoseMonitoringEngine,
-    NephrologyConsultAutogenerationEngine,
-    TtkgAssessmentEngine,
-    DifferentialDiagnosisEngine,
-    DrugReviewEngine,
+    BaseEnrichmentEngine,
     TranstubularpotassiumgradientttkgEnrichmentSuite,
     enrichment_suite,
+    ELECTROLYTE_REPLACEMENT,
+    NEPHROTOXIC_DRUG_INTERACTION,
+    AKI_STAGING_PROGRESSION,
+    CRRT_DOSE_MONITORING,
+    NEPHROLOGY_CONSULT,
+    TTKG_ASSESSMENT,
+    DIFFERENTIAL_DIAGNOSIS,
+    DRUG_REVIEW,
 )
 
 def test_enrichment_suite_execution():
@@ -33,3 +34,15 @@ def test_enrichment_threshold_escalation():
     for k, v in res.items():
         assert v.status in ["WARNING", "CRITICAL_ALERT"]
         assert len(v.alerts) > 0
+
+def test_individual_engine():
+    engine = BaseEnrichmentEngine("Test Engine", threshold=5.0)
+    res = engine.evaluate(3.0)
+    assert res.status == "OPTIMAL"
+    assert res.score == 3.0
+
+def test_engine_critical_alert():
+    engine = BaseEnrichmentEngine("Test Engine", threshold=5.0)
+    res = engine.evaluate(15.0)
+    assert res.status == "CRITICAL_ALERT"
+    assert len(res.alerts) > 0

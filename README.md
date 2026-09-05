@@ -1,7 +1,7 @@
 # Transtubular Potassium Gradient TTKG
 
-> **Domain:** Diagnostic Radiology & Medical Imaging AI  
-> **Reference Guidelines & Standards:** `American College of Radiology (ACR) RADS & Fleischner Society`
+> **Domain:** Clinical Nephrology & Electrolyte Physiology
+> **References:** West ML et al. (NEJM 1986), Kamel KS et al. (Kidney Int 2002)
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 
 ## 📖 What It Does
 
-Transtubular Potassium Gradient (TTKG) Calculator
+Transtubular Potassium Gradient (TTKG) Calculator for clinical assessment of renal potassium handling.
 
 Real implementations for:
 - TTKG = (UK × POsm) / (UOsm × PK)
@@ -26,9 +26,6 @@ Real implementations for:
 - Aldosterone assessment
 - Urine K/Cr ratio
 - Transtubular Na gradient (TTNaG)
-
-References: West ML et al. (NEJM 1986), Kamel KS et al. (Kidney Int 2002)
-Stdlib only.
 
 ---
 
@@ -60,6 +57,7 @@ Args:
 
 Returns:
     Dict with TTKG and interpretation
+
 - **`calc_urine_k_cr_ratio()`**: Urine K/Creatinine ratio.
 
 Useful when urine osmolality not available.
@@ -74,6 +72,7 @@ Args:
 
 Returns:
     Dict with K/Cr ratio and interpretation
+
 - **`calc_ttna_gradient()`**: Transtubular Sodium Gradient (TTNaG).
 
 TTNaG = (UNa × POsm) / (UOsm × PNa)
@@ -90,54 +89,64 @@ Args:
 
 Returns:
     Dict with TTNaG and interpretation
+
 - **`full_potassium_assessment()`**: Complete potassium handling assessment.
-- **`main()`** — calculates and validates main parameters.
-
----
-
-## 📐 Mathematical Formulation & Logic
-
-```text
-  p_ttkg = sub.add_parser("ttkg", help="Calculate TTKG")
-```
 
 ---
 
 ## 💻 CLI Quickstart & Usage
 
-### 1. Guided Interactive Mode
+### Installation
 ```bash
-python cli.py
+pip install pydantic fastapi uvicorn pytest
 ```
 
-### 2. Direct Parameterized Evaluation
+### 1. Calculate TTKG
 ```bash
-python cli.py --input data.csv
+python cli.py ttkg --urine-k 60 --plasma-osm 285 --urine-osm 300 --plasma-k 4.0
 ```
 
-### Parameter Reference
-- `--interactive`: Launch guided terminal interactive wizard.
-- `--input <path>`: Evaluate input from JSON or CSV specification.
-- `--json`: Output deterministic structured results in JSON format.
+### 2. Calculate Urine K/Cr Ratio
+```bash
+python cli.py k-cr --urine-k 25 --urine-cr 100
+```
 
-### Input Data Schema
+### 3. Calculate TTNaG
+```bash
+python cli.py ttnag --urine-na 50 --plasma-na 140 --urine-osm 300 --plasma-osm 285
+```
 
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `Patient_ID` | Parameter / observation metric | Required |
-| `v1` | Parameter / observation metric | Required |
-| `v2` | Parameter / observation metric | Required |
-| `v3` | Parameter / observation metric | Required |
+### 4. Full Assessment
+```bash
+python cli.py full --urine-k 5 --plasma-k 2.5 --plasma-osm 285 --urine-osm 400 --urine-cr 100
+```
+
+### 5. Enterprise Supervisor Audit
+```bash
+python cli.py audit --task-id TASK-001 --primary-metric 12.0
+```
+
+### 6. Verify Audit Trail
+```bash
+python cli.py verify-audit
+```
 
 ---
 
 ## 🛡️ Security & Enterprise Architecture
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
+* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
 * **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
 * **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
 * **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
 * **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+
+### Environment Variables
+
+| Variable | Description | Required |
+|:---------|:------------|:---------|
+| `AUDIT_SECRET_KEY` | HMAC-SHA256 key for audit trail integrity | Recommended (generated if unset) |
+| `MODEL_PROVIDER` | LLM provider (`mock`, `ollama`, `claude`, `openai`) | No (default: `mock`) |
 
 ---
 
@@ -152,7 +161,7 @@ pytest -v
 Execute high-throughput batch simulation benchmarks:
 
 ```bash
-python simulator.py --tasks 1000 --concurrency 8
+python simulator.py 100
 ```
 
 ---
@@ -161,5 +170,40 @@ python simulator.py --tasks 1000 --concurrency 8
 
 ```bash
 docker build -t transtubular-potassium-gradient-ttkg .
-docker run -p 8000:8000 transtubular-potassium-gradient-ttkg
+docker run -p 8000:8000 --env AUDIT_SECRET_KEY=your-secure-key transtubular-potassium-gradient-ttkg
+```
+
+Or using Docker Compose:
+
+```bash
+cp .env.example .env
+# Edit .env to set AUDIT_SECRET_KEY
+docker-compose up -d
+```
+
+---
+
+## 📁 Project Structure
+
+```
+transtubular-potassium-gradient-ttkg/
+├── ttkg_calc.py          # Core calculation engine + CLI
+├── cli.py                # CLI entry point
+├── enrichment.py         # Enrichment engine suite
+├── simulator.py          # High-throughput simulation
+├── agents/               # Enterprise agent framework
+│   ├── base.py           # PHI guard, audit trail, security
+│   ├── models.py         # Pydantic schemas
+│   ├── supervisor.py     # Multi-agent orchestrator
+│   ├── workers.py        # Specialized domain workers
+│   ├── llm_factory.py    # LLM provider factory
+│   ├── api.py            # FastAPI REST server
+│   ├── metrics.py        # Prometheus metrics
+│   ├── streamer.py       # WebSocket telemetry
+│   └── learning.py       # Bayesian calibration engine
+├── tests/                # Test suite
+├── web/                  # Operations console UI
+├── Dockerfile
+├── docker-compose.yml
+└── openapi_spec.json
 ```
