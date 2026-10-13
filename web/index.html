@@ -46,6 +46,7 @@
             color: var(--accent);
             border: 1px solid var(--accent);
         }
+        @media (max-width: 760px) { .grid { grid-template-columns: 1fr !important; } .metrics-bar { grid-template-columns: repeat(2,1fr) !important; } body { padding: 1rem; } .header { gap: 1rem; flex-wrap: wrap; } }
         .grid {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
@@ -78,7 +79,7 @@
             font-family: inherit;
             font-size: 0.9rem;
         }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
         .btn {
             background: var(--accent);
             color: #fff;
@@ -125,26 +126,26 @@
     <div class="header">
         <div class="header-title">
             <h1>Transtubular Potassium Gradient Ttkg</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
+            <p>Educational operations demo · generic test thresholds · no clinical protocol validation</p>
         </div>
         <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
+            <span class="badge">Backend required</span>
+            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Identifier pattern checks enabled</span>
         </div>
     </div>
 
     <div class="metrics-bar">
         <div class="metric-box">
             <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
+            <div class="metric-val" style="color: var(--success);" id="m-status">Not checked</div>
         </div>
         <div class="metric-box">
             <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
+            <div class="metric-val" id="m-tasks">0</div>
         </div>
         <div class="metric-box">
             <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
+            <div class="metric-val" id="m-audit">0</div>
         </div>
         <div class="metric-box">
             <div class="metric-label">PHI Interceptions</div>
@@ -184,17 +185,15 @@
         <div class="card">
             <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
             <div class="terminal" id="outputConsole">// Transtubular Potassium Gradient Ttkg Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
+// Backend status is not yet confirmed.
+// The server keeps an in-memory audit trail. No PHI should be submitted.</div>
         </div>
     </div>
 
     <script>
         async function runAudit() {
             const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
+            consoleEl.innerText = "Dispatching the demonstration audit request...";
 
             const payload = {
                 task_id: document.getElementById('task_id').value,
@@ -211,24 +210,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                if (!res.ok) {
+                    throw new Error("API returned HTTP " + res.status);
+                }
                 const data = await res.json();
                 consoleEl.innerText = JSON.stringify(data, null, 2);
+                document.getElementById('m-status').innerText = "Connected";
                 document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
                 document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
             } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "transtubular-potassium-gradient-ttkg",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
+                document.getElementById('m-status').innerText = "API unavailable";
+                consoleEl.innerText = "Audit not executed: " + err.message +
+                  "\\nStart the FastAPI server to use this console. No simulated dossier was generated.";
             }
         }
     </script>
