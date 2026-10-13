@@ -132,6 +132,17 @@ def calc_ttkg(urine_k: float, plasma_osm: float, urine_osm: float,
         etiology = "N/A"
         recommendation = "Potassium is within normal range. TTKG interpretation requires hypo- or hyperkalemia."
 
+    # Historical categories are retained for educational backward compatibility.
+    # Neither the estimate nor an apparently met prerequisite establishes aldosterone function.
+    aldosterone_status = "TTKG alone cannot establish aldosterone status"
+    if not assumptions_met:
+        recommendation = (
+            "TTKG prerequisites are unverified or unmet. Do not apply its historical "
+            "interpretation clinically; consider urine K/creatinine and the full evaluation."
+        )
+    else:
+        recommendation += " TTKG has disputed clinical validity; corroborate independently."
+
     return {
         "ttkg": round(ttkg, 2),
         "assumptions_met": assumptions_met,
@@ -145,7 +156,7 @@ def calc_ttkg(urine_k: float, plasma_osm: float, urine_osm: float,
         "aldosterone_status": aldosterone_status,
         "possible_etiology": etiology,
         "recommendation": recommendation,
-        "normal_range": "8-9 (in steady state)",
+        "normal_range": "No validated universal normal range",
     }
 
 
@@ -155,9 +166,11 @@ def calc_urine_k_cr_ratio(urine_k: float, urine_cr: float) -> Dict[str, Any]:
 
     Useful when urine osmolality not available.
 
-    UK/UCr (mEq/mg):
-        < 13 mEq/g (or < 1.5 mEq/mmol): Appropriate K conservation
-        > 200 mEq/g (or > 23 mEq/mmol): Significant K wasting
+    Spot urine K/Cr (mEq/g creatinine):
+        <13: Suggests renal potassium conservation in hypokalemia
+        >13: Suggests possible renal potassium wasting in hypokalemia
+        (At 13: Threshold value; clinical context required)
+        13 mEq/g is approximately 1.5 mEq/mmol creatinine.
 
     Args:
         urine_k: Urine potassium (mEq/L)
