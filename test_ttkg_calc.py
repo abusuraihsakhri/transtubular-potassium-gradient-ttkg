@@ -105,7 +105,7 @@ def test_k_cr_ratio_indeterminate():
     r = calc_urine_k_cr_ratio(50, 50)
     # 50/50 × 100 = 100 mEq/g
     assert r["urine_k_cr_ratio_meq_g"] == 100.0
-    assert "indeterminate" in r["interpretation"].lower()
+    assert "wasting" in r["interpretation"].lower()
 
 
 def test_k_cr_ratio_boundary():
@@ -113,6 +113,7 @@ def test_k_cr_ratio_boundary():
     # Need UK/UCr × 100 = 13 → UK/UCr = 0.13
     r = calc_urine_k_cr_ratio(13, 100)
     assert r["urine_k_cr_ratio_meq_g"] == 13.0
+    assert "threshold" in r["interpretation"].lower()
 
 
 # --- TTNaG ---

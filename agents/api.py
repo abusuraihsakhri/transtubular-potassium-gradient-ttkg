@@ -2,6 +2,9 @@
 FastAPI REST API Server for Transtubular Potassium Gradient Ttkg.
 """
 from typing import Dict, Any, List
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from .base import AuditLogger, PHIGuard
@@ -12,7 +15,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Transtubular Potassium Gradient Ttkg API",
-    description="Enterprise Distributed Component Platform (Radiology & Neuroimaging Systems)",
+    description="Educational operations demo; generic audit workflows are not clinical decision support",
     version="3.0.0-ENTERPRISE",
 )
 
@@ -23,7 +26,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "transtubular-potassium-gradient-ttkg", "domain": "Radiology & Neuroimaging Systems", "standard": "ACR RADS / Fleischner Society / ASPECTS Guidelines", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "transtubular-potassium-gradient-ttkg", "domain": "Educational demo", "version": "3.0.0-ENTERPRISE"}
 
 
 @app.get("/metrics")
@@ -53,3 +56,11 @@ def api_chat(req: ChatRequest):
 @app.get("/api/audit/logs")
 def api_audit_logs():
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    return RedirectResponse(url="/console/")
+
+
+app.mount("/console", StaticFiles(directory=str(Path(__file__).resolve().parent.parent / "web"), html=True), name="console")
