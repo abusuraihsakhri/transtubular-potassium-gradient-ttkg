@@ -1,6 +1,6 @@
 """
 Supervisor Orchestrator & Operations Intelligence for Transtubular Potassium Gradient Ttkg.
-Domain: Radiology & Neuroimaging Systems
+Domain: Educational audit demo
 """
 import uuid
 from typing import Dict, Any, List, Optional
@@ -75,5 +75,5 @@ class SystemSupervisor:
 
     def query_supervisory_chat(self, query: str) -> str:
         PHIGuard.assert_no_phi(query)
-        prompt = f"Supervisor inquiry for Transtubular Potassium Gradient Ttkg under ACR RADS / Fleischner Society / ASPECTS Guidelines: {query}"
+        prompt = f"Supervisor inquiry for Transtubular Potassium Gradient Ttkg under demonstration-only rules: {query}"
         return self.llm.invoke(prompt)
