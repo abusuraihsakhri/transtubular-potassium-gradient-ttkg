@@ -44,7 +44,7 @@ uvicorn agents.api:app --host 127.0.0.1 --port 8000
 # Open http://127.0.0.1:8000/console/
 ```
 
-Docker deployment is available using `docker build -t ttkg .` and `docker run --rm -p 8000:8000 -e AUDIT_SECRET_KEY=<secure-random-key> ttkg`. Configure the audit key using a secret management mechanism for any non-disposable environment. The API has no authentication and must **not** be exposed to untrusted networks.
+Docker deployment is available using `docker build -t ttkg .` and `docker run --rm -p 8000:8000 -e AUDIT_SECRET_KEY="$AUDIT_SECRET_KEY" ttkg`. Configure the audit key using a secret management mechanism for any non-disposable environment. The API has no authentication and must **not** be exposed to untrusted networks.
 
 ## Testing
 
