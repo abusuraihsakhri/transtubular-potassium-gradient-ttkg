@@ -15,12 +15,13 @@ Stdlib only.
 
 import argparse
 import json
+import math
 import sys
 from typing import Dict, Any
 
 
 def calc_ttkg(urine_k: float, plasma_osm: float, urine_osm: float,
-              plasma_k: float) -> Dict[str, Any]:
+              plasma_k: float, urine_na: float = None) -> Dict[str, Any]:
     """
     Transtubular Potassium Gradient (TTKG).
 
@@ -56,7 +57,28 @@ def calc_ttkg(urine_k: float, plasma_osm: float, urine_osm: float,
     if plasma_osm <= 0:
         raise ValueError("Plasma osmolality must be positive")
 
+    measurements = {"urine_k": urine_k, "plasma_osm": plasma_osm,
+                    "urine_osm": urine_osm, "plasma_k": plasma_k}
+    if urine_na is not None:
+        measurements["urine_na"] = urine_na
+    for name, value in measurements.items():
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+    if urine_na is not None and urine_na < 0:
+        raise ValueError("Urine sodium cannot be negative")
+
     ttkg = (urine_k * plasma_osm) / (urine_osm * plasma_k)
+    limitations = [
+        "TTKG is a historical estimate with disputed physiological validity "
+        "(medullary urea recycling); do not use alone for clinical decisions."
+    ]
+    if urine_osm < plasma_osm:
+        limitations.append("Urine osmolality is below plasma osmolality.")
+    if urine_na is None:
+        limitations.append("Urine sodium was not supplied; distal sodium delivery cannot be assessed.")
+    elif urine_na < 25:
+        limitations.append("Urine sodium below 25 mEq/L invalidates the traditional TTKG assumptions.")
+    assumptions_met = urine_osm >= plasma_osm and urine_na is not None and urine_na >= 25
 
     # Determine clinical context
     if plasma_k < 3.5:
@@ -112,6 +134,8 @@ def calc_ttkg(urine_k: float, plasma_osm: float, urine_osm: float,
 
     return {
         "ttkg": round(ttkg, 2),
+        "assumptions_met": assumptions_met,
+        "limitations": limitations,
         "plasma_k": plasma_k,
         "urine_k": urine_k,
         "plasma_osm": plasma_osm,
@@ -147,6 +171,9 @@ def calc_urine_k_cr_ratio(urine_k: float, urine_cr: float) -> Dict[str, Any]:
     if urine_k < 0:
         raise ValueError("Urine potassium cannot be negative")
 
+    if not math.isfinite(urine_k) or not math.isfinite(urine_cr):
+        raise ValueError("Urine potassium and creatinine must be finite")
+
     # Ratio in mEq/mg (× 100 to get mEq/g)
     ratio_meq_mg = urine_k / urine_cr
     ratio_meq_g = ratio_meq_mg * 100.0
@@ -154,12 +181,13 @@ def calc_urine_k_cr_ratio(urine_k: float, urine_cr: float) -> Dict[str, Any]:
     if ratio_meq_g < 13:
         interpretation = "Appropriate renal K conservation"
         recommendation = "Low K/Cr ratio suggests kidneys are conserving K appropriately."
-    elif ratio_meq_g <= 200:
-        interpretation = "Indeterminate"
-        recommendation = "Borderline ratio. Correlate with clinical context."
+    elif ratio_meq_g == 13:
+        interpretation = "At threshold"
+        recommendation = "At the conventional 13 mEq/g threshold; interpret in clinical context."
     else:
-        interpretation = "Significant renal K wasting"
-        recommendation = "High K/Cr ratio suggests inappropriate renal K loss."
+        interpretation = "Possible renal K wasting"
+        recommendation = ("Above 13 mEq/g may indicate renal potassium loss during hypokalemia; "
+                          "interpret with medication use and acid-base status.")
 
     return {
         "urine_k_cr_ratio_meq_g": round(ratio_meq_g, 1),
@@ -198,6 +226,11 @@ def calc_ttna_gradient(urine_na: float, plasma_na: float,
     if plasma_osm <= 0:
         raise ValueError("Plasma osmolality must be positive")
 
+    if urine_na < 0:
+        raise ValueError("Urine sodium cannot be negative")
+    if not all(math.isfinite(v) for v in (urine_na, plasma_na, urine_osm, plasma_osm)):
+        raise ValueError("Sodium and osmolality values must be finite")
+
     ttnag = (urine_na * plasma_osm) / (urine_osm * plasma_na)
 
     if ttnag < 1:
@@ -212,6 +245,7 @@ def calc_ttna_gradient(urine_na: float, plasma_na: float,
 
     return {
         "ttnag": round(ttnag, 2),
+        "limitation": "TTNaG is not a validated stand-alone clinical diagnostic test.",
         "urine_na": urine_na,
         "plasma_na": plasma_na,
         "urine_osm": urine_osm,
@@ -230,10 +264,10 @@ def full_potassium_assessment(urine_k: float, plasma_k: float,
     Complete potassium handling assessment.
     """
     result = {
-        "ttkg": calc_ttkg(urine_k, plasma_osm, urine_osm, plasma_k),
+        "ttkg": calc_ttkg(urine_k, plasma_osm, urine_osm, plasma_k, urine_na=urine_na),
     }
 
-    if urine_cr is not None and urine_cr > 0:
+    if urine_cr is not None:
         result["urine_k_cr_ratio"] = calc_urine_k_cr_ratio(urine_k, urine_cr)
 
     if (urine_na is not None and plasma_na is not None and
@@ -260,6 +294,7 @@ def main(argv=None):
     p_ttkg.add_argument("--plasma-osm", type=float, required=True, help="Plasma Osm (mOsm/kg)")
     p_ttkg.add_argument("--urine-osm", type=float, required=True, help="Urine Osm (mOsm/kg)")
     p_ttkg.add_argument("--plasma-k", type=float, required=True, help="Plasma K (mEq/L)")
+    p_ttkg.add_argument("--urine-na", type=float, default=None, help="Optional urine Na (mEq/L) to check TTKG assumptions")
 
     # Urine K/Cr ratio
     p_kcr = sub.add_parser("k-cr", help="Urine K/Cr ratio")
@@ -302,7 +337,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     if args.command == "ttkg":
-        result = calc_ttkg(args.urine_k, args.plasma_osm, args.urine_osm, args.plasma_k)
+        result = calc_ttkg(args.urine_k, args.plasma_osm, args.urine_osm, args.plasma_k, urine_na=args.urine_na)
     elif args.command == "k-cr":
         result = calc_urine_k_cr_ratio(args.urine_k, args.urine_cr)
     elif args.command == "ttnag":
